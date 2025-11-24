@@ -1,0 +1,76 @@
+1) Create docker-compose.yml file for pgvector
+version: '3.1'
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: pgvector-db
+    environment:
+      POSTGRES_USER: raguser
+      POSTGRES_PASSWORD: ragpass
+      POSTGRES_DB: ragdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+volumes:
+  pgvector_data:
+
+2) Run the command to start the container in detached mode:
+Open terminal in the folder 	where the docker-compose.yml file is and then run
+docker compose up -d
+3) Docker will pull the pgvector/pgvector:pg16 image and start the Postgres instance with pgvector extension enabled.
+
+You can verify the container is running with:
+docker ps
+For stopping:
+docker compose down
+
+4) Ollama (for local LLMs):
+docker run -d -p 11434:11434 --name ollama ollama/ollama 
+
+
+This will pull a model (e.g., llama3): ollama pull llama3
+Ollama exposes REST API at http://localhost:11434
+
+5) Pull the embedding model
+
+Find your running Ollama container:
+
+
+docker ps
+Access the shell inside the container:
+
+
+docker exec -it ollama bash
+
+Once in the shell, run:
+
+--For embedding
+ollama pull mxbai-embed-large
+ollama pull bge-m3
+--For chat
+ollama pull gemma3n:e2b
+
+6) Create the table in Postgres
+In docker running container in docker desktop enter
+psql -U raguser -d ragdb
+
+CREATE EXTENSION IF NOT EXISTS vector;
+
+
+CREATE TABLE public.vector_store (
+    id UUID PRIMARY KEY,
+    content TEXT NOT NULL,
+    metadata JSONB,
+    embedding VECTOR(1024) NOT NULL
+);
+
+CREATE TABLE public.documents (
+    id UUID PRIMARY KEY,
+    content TEXT NOT NULL,
+    metadata JSONB,
+    embedding VECTOR(1024) NOT NULL
+);
+
+
+
